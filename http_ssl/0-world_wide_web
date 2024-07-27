@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Displays information about subdomains
+
+audit_subdomain() {
+    local domain="$1"
+    local subdomain="$2"
+    
+    # Use dig to get the DNS record, then awk to extract the relevant information
+    result=$(dig "$subdomain.$domain" | awk '/ANSWER SECTION:/ {getline; print $4 " " $5}')
+    
+    # Extract record type and destination from the result
+    record_type=$(echo "$result" | cut -d' ' -f1)
+    destination=$(echo "$result" | cut -d' ' -f2)
+    
+    echo "The subdomain $subdomain is a $record_type record and points to $destination"
+}
+
+# Main script execution
+if [ "$#" -eq 1 ]; then
+    domain="$1"
+    for subdomain in "www" "lb-01" "web-01" "web-02"; do
+        audit_subdomain "$domain" "$subdomain"
+    done
+elif [ "$#" -eq 2 ]; then
+    domain="$1"
+    subdomain="$2"
+    audit_subdomain "$domain" "$subdomain"
+else
+    echo "Usage: $0 <domain> [subdomain]"
+    exit 1
+fi
